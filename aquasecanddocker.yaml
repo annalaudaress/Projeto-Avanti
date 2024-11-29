@@ -1,4 +1,5 @@
 name: Docker Build + Scan com o Trivy
+
 on:
   push:
     branches:
@@ -23,16 +24,29 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-buildx-
 
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}  # Defina esse segredo no seu repositório do GitHub
+          password: ${{ secrets.DOCKER_PASSWORD }}  # Defina esse segredo no seu repositório do GitHub
+
       - name: Build Docker Images
         run: |
-          # Construir a imagem para homolog
-          docker build -t seu_usuario_docker/ambiente-homolog -f Dockerfile .
+          # Construir a imagem para homolog com o argumento ENVIRONMENT
+          docker build -t seu_usuario_docker/ambiente-homolog --build-arg ENVIRONMENT=homolog -f Dockerfile .
           
-          # Construir a imagem para produção
-          docker build -t seu_usuario_docker/ambiente-prod -f Dockerfile .
+          # Construir a imagem para produção com o argumento ENVIRONMENT
+          docker build -t seu_usuario_docker/ambiente-prod --build-arg ENVIRONMENT=prod -f Dockerfile .
           
-          # Construir a imagem para teste
-          docker build -t seu_usuario_docker/ambiente-teste -f Dockerfile .
+          # Construir a imagem para teste com o argumento ENVIRONMENT
+          docker build -t seu_usuario_docker/ambiente-teste --build-arg ENVIRONMENT=teste -f Dockerfile .
+
+      - name: Push Docker Images to Docker Hub
+        run: |
+          # Empurrar as imagens para o Docker Hub
+          docker push seu_usuario_docker/ambiente-homolog
+          docker push seu_usuario_docker/ambiente-prod
+          docker push seu_usuario_docker/ambiente-teste
 
       - name: Install Trivy
         run: |
